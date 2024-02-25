@@ -2,8 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Sofia+Sans:wght@400;700&display=swap');
+
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Sofia Sans', Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
@@ -15,4 +17,58 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.inpt{
+  background: linear-gradient(180deg,#d11055,rgba(132,0,47,.25) 119.74%);
+}
+
+.upld{
+  background: linear-gradient(180deg,#1c9fff,rgba(0,86,150,.25) 119.74%);
+}
+
+@keyframes red-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.red-pulse {
+  animation: red-pulse 2s infinite;
+  color: red;
+}
+
+@keyframes green-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.green-pulse {
+  animation: green-pulse 2s infinite;
+  color: green;
+}
+
+input[type="checkbox"] {
+  appearance: button;
+  width: 100px;
+  height: 50px;
 }
