@@ -9,7 +9,15 @@ function App() {
   const [displayCheck, setDisplayCheck] = useState(null);
   const [models, setModel] = useState([]);
   const [modelCheck, setModelCheck] = useState(null);
+  const [LSTMCheck, setLSTMCheck] = useState(null);
+  const [GRUCheck, setGRUCheck] = useState(null);
+  const [RNNCheck, setRNNCheck] = useState(null);
+  const [epochCheck, setEpochCheck] = useState(null);
+  const [epochs, setEpochs] = useState(["", "", ""]);
   const [val, setVal] = useState("Upload an image to get started.");
+  const [RNNdata, setRNNdata] = useState([]);
+  const [GRUdata, setGRUdata] = useState([]);
+  const [LSTMdata, setLSTMdata] = useState([]);
   const [data, setData] = useState("Disconnected");
 
   const handleImageUpload = (event) => {
@@ -17,24 +25,64 @@ function App() {
     setSelectedImage(event.target.files[0]);
     setDisplayCheck(true);
   };
-  
-useEffect(() => {
-  console.log(numModels);
-  if (numModels > 0) {
-    setModelCheck(true);
-  } else if (numModels === 0){
-    setModelCheck(null);
-  }
-  console.log(models);
-}, [numModels]);
+
+  useEffect(() => {
+    console.log(numModels);
+    if (numModels > 0) {
+      setModelCheck(true);
+    } else if (numModels === 0) {
+      setModelCheck(null);
+    }
+    console.log(models);
+  }, [numModels]);
+
+  useEffect(() => {
+    console.log(epochs);
+    const epochChecker = epochs.filter((epoch) => epoch != "").length;
+    if (epochChecker === numModels && numModels !== 0) setEpochCheck(true);
+    else setEpochCheck(null);
+    console.log(epochChecker);
+  }, [epochs, numModels]);
+
+  const handleEpochChange = (event) => {
+    if (event.target.id === "LSTMepochs") {
+      setEpochs((prevEpoches) => [
+        event.target.value,
+        prevEpoches[1],
+        prevEpoches[2],
+      ]);
+    }
+    if (event.target.id === "GRUepochs") {
+      setEpochs((prevEpoches) => [
+        prevEpoches[0],
+        event.target.value,
+        prevEpoches[2],
+      ]);
+    }
+    if (event.target.id === "RNNepochs") {
+      setEpochs((prevEpoches) => [
+        prevEpoches[0],
+        prevEpoches[1],
+        event.target.value,
+      ]);
+    }
+  };
 
   const handleModel = (event) => {
     if (event.target.checked) {
-      setNumModels(prevNumModels => prevNumModels + 1);
-      setModel(prevModel => [...prevModel, event.target.value]);
+      if (event.target.value === "LSTM") setLSTMCheck(true);
+      else if (event.target.value === "GRU") setGRUCheck(true);
+      else if (event.target.value === "RNN") setRNNCheck(true);
+      setNumModels((prevNumModels) => prevNumModels + 1);
+      setModel((prevModel) => [...prevModel, event.target.value]);
     } else {
-      setNumModels(prevNumModels => prevNumModels - 1);
-      setModel(prevModel => prevModel.filter((model) => model !== event.target.value));
+      if (event.target.value === "LSTM") setLSTMCheck(null);
+      else if (event.target.value === "GRU") setGRUCheck(null);
+      else if (event.target.value === "RNN") setRNNCheck(null);
+      setNumModels((prevNumModels) => prevNumModels - 1);
+      setModel((prevModel) =>
+        prevModel.filter((model) => model !== event.target.value)
+      );
     }
   };
 
@@ -63,12 +111,12 @@ useEffect(() => {
     formData.append("file", selectedImage);
     console.log(JSON.stringify(models));
     try {
-      const res = await fetch('http://localhost:5000/model', {
-        method: 'POST',
+      const res = await fetch("http://localhost:5000/model", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(models)
+        body: JSON.stringify({ models, epochs })
       });
       const data = await res.json();
       console.log(data.message);
@@ -81,8 +129,10 @@ useEffect(() => {
         body: formData,
       });
       const newData = await res.json();
-      console.log(newData.caption2);
-      setVal(newData.caption2);
+      console.log(newData);
+      setLSTMdata([newData.LSTMcaption, newData.LSTMet]);
+      setGRUdata([newData.GRUcaption, newData.GRUet]);
+      setRNNdata([newData.RNNcaption, newData.RNNet]);
       setTimeout(() => {
         setLtext("Choose another image");
         setDisplayCheck(null);
@@ -91,6 +141,7 @@ useEffect(() => {
     } catch (error) {
       console.log(error);
     }
+    setVal("Done.");
   };
 
   return (
@@ -145,19 +196,99 @@ useEffect(() => {
               </div>
               <div className="flex flex-row gap-20 mb-5">
                 <div>
-                  <input type="checkbox" id="model1" name="model1" value="1" onChange={handleModel}/>
-                  <label htmlFor="model1">Model 1</label>
+                  <input
+                    type="checkbox"
+                    id="model1"
+                    name="model1"
+                    value="LSTM"
+                    onChange={handleModel}
+                  />
+                  <label htmlFor="model1">LSTM</label>
                   <br />
                 </div>
                 <div>
-                  <input type="checkbox" id="model2" name="model2" value="2" onChange={handleModel}/>
-                  <label htmlFor="model1">Model 2</label>
+                  <input
+                    type="checkbox"
+                    id="model2"
+                    name="model2"
+                    value="GRU"
+                    onChange={handleModel}
+                  />
+                  <label htmlFor="model1">GRU</label>
+                  <br />
+                </div>
+                <div>
+                  <input
+                    type="checkbox"
+                    id="model3"
+                    name="model3"
+                    value="RNN"
+                    onChange={handleModel}
+                  />
+                  <label htmlFor="model1">RNN</label>
                   <br />
                 </div>
               </div>
             </>
           )}
-          {modelCheck && (
+          {modelCheck && LSTMCheck && (
+            <div className="text-[25px] mb-5">
+              Choose the number of epochs for LSTM: &nbsp;
+              <select
+                id="LSTMepochs"
+                name="LSTMepochs"
+                onChange={(e) => handleEpochChange(e)}
+              >
+                <option value="">...</option>
+                <option value="3">3</option>
+                <option value="6">6</option>
+                <option value="9">9</option>
+                <option value="12">12</option>
+                <option value="15">15</option>
+                <option value="18">18</option>
+                <option value="21">21</option>
+              </select>
+            </div>
+          )}
+          {modelCheck && GRUCheck && (
+            <div className="text-[25px] mb-5">
+              Choose the number of epochs for GRU: &nbsp;
+              <select
+                id="GRUepochs"
+                name="GRUepochs"
+                onChange={(e) => handleEpochChange(e)}
+              >
+                <option value="">...</option>
+                <option value="3">3</option>
+                <option value="6">6</option>
+                <option value="9">9</option>
+                <option value="12">12</option>
+                <option value="15">15</option>
+                <option value="18">18</option>
+                <option value="21">21</option>
+              </select>
+            </div>
+          )}
+          {modelCheck && RNNCheck && (
+            <div className="text-[25px] mb-5">
+              Choose the number of epochs for RNN: &nbsp;
+              <select
+                id="RNNepochs"
+                name="RNNepochs"
+                onChange={(e) => handleEpochChange(e)}
+              >
+                <option value="">...</option>
+                <option value="3">3</option>
+                <option value="6">6</option>
+                <option value="9">9</option>
+                <option value="12">12</option>
+                <option value="15">15</option>
+                <option value="18">18</option>
+                <option value="21">21</option>
+              </select>
+            </div>
+          )}
+          {modelCheck && epochCheck && (
             <button
               type="submit"
               id="submit"
@@ -167,7 +298,28 @@ useEffect(() => {
             </button>
           )}
         </form>
-        <div className="mt-5 mb-3 text-[25px]">{val}</div>
+        <div className="mt-5 mb-10 text-[25px]">{val}</div>
+        {LSTMdata.length > 0 && (
+          <div className="flex flex-col items-center">
+            <div className="text-[25px] mb-5 text-[#F0B542]">LSTM:</div>
+            <div className="text-[20px] mb-5">{LSTMdata[0]}</div>
+            <div className="text-[20px] mb-5">Execution Time: {LSTMdata[1]}s</div>
+          </div>
+        )}
+        {GRUdata.length > 0 && (
+          <div className="flex flex-col items-center">
+            <div className="text-[25px] mb-5 text-[#d11055]">GRU:</div>
+            <div className="text-[20px] mb-5">{GRUdata[0]}</div>
+            <div className="text-[20px] mb-5">Execution Time: {GRUdata[1]}s</div>
+          </div>
+        )}
+        {RNNdata.length > 0 && (
+          <div className="flex flex-col items-center">
+            <div className="text-[25px] mb-5 text-[#1c9fff]">RNN:</div>
+            <div className="text-[20px] mb-5">{RNNdata[0]}</div>
+            <div className="text-[20px] mb-5">Execution Time: {RNNdata[1]}s</div>
+          </div>
+        )}
       </div>
       <div className="w-[100%] h-[10px] bg-[#F0B542]"></div>
     </>

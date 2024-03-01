@@ -3,34 +3,32 @@ from flask_cors import CORS
 import os
 import time
 
-from LTSM.model1 import predict_caption, initialize, initializeImg
-from GRU.model2 import ImageCaptioner
+from model_class import process_image, CaptioningModel
+from tensorflow.keras.applications.vgg16 import VGG16
+from tensorflow.keras.models import Model
+from tensorflow.keras.preprocessing.text import tokenizer_from_json
+import json
 
 ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg'])
 
 caption = {}
 models = None
-# Load the model1
-model, tokenizer, max_length, vgg_model = initialize()
-# Load the model2
-captioner = ImageCaptioner('./GRU/best_model.h5')
+vgg_model = VGG16()
+vgg_model = Model(inputs=vgg_model.inputs, outputs=vgg_model.layers[-2].output)
+tokenizer = tokenizer_from_json(json.load(open('resources/tokenizer.json')))
+
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
-def model1(img_path):
+def Caption(processed, name, i):
     start_time = time.time()
-    feature = initializeImg(img_path, vgg_model)
-    caption = predict_caption(model, feature, tokenizer, max_length)
+    captioner = CaptioningModel(f'{name.lower()}_models/{name}_epoch{epochs[i]}.h5', tokenizer)
+    caption = captioner.predict_caption(processed)
     elaspsed_time = time.time() - start_time
-    caption = ' '.join(caption.split()[1:-1])
-    caption = caption.capitalize() + '.'
+    caption += '.'
+    caption = caption.capitalize()
     return caption, elaspsed_time
-
-def model2(img_path):
-    caption = captioner.caption(img_path, display=False)
-    caption = caption.capitalize() + '.'
-    return caption
 
 @app.route("/")
 def home():
@@ -38,10 +36,13 @@ def home():
 
 @app.route("/model", methods=['POST'])
 def model():
-    global models
-    models = request.get_json()
+    global models, epochs
+    data = request.get_json()
+    models = data.get('models')
+    epochs = data.get('epochs')
     print(models)
-    return jsonify({'message': 'Models Loaded'}), 200
+    print(epochs[0])
+    return jsonify({'message': 'Models and epochs Loaded'}), 200
     
 
 @app.route("/upload", methods=['POST'])
@@ -66,15 +67,21 @@ def upload():
         # Write the filename to a text file
         img_path = 'uploads/' + file.filename
         file.save(img_path)
+        processed = process_image(img_path, vgg_model)
+        print("Initialization complete")
         global caption
         for model in models:
-            if model == '1':
-                caption1, et1 = model1(img_path)
-                response = {"caption1": caption1, "elapsed_time1": et1}
+            if model == 'LSTM':
+                LSTMcaption, LSTMet = Caption(processed, 'LSTM', 0)
+                response = {"LSTMcaption": LSTMcaption, "LSTMet": LSTMet}
                 caption.update(response)
-            if model == '2':
-                caption2 = model2(img_path)
-                response = {"caption2": caption2}
+            if model == 'GRU':
+                GRUcaption, GRUet = Caption(processed, 'GRU', 1)
+                response = {"GRUcaption": GRUcaption, "GRUet": GRUet}              
+                caption.update(response)
+            if model == 'RNN':
+                RNNcaption, RNNet = Caption(processed, 'RNN', 2)
+                response = {"RNNcaption": RNNcaption, "RNNet": RNNet}
                 caption.update(response)
 
         # Remove the image after captioning
