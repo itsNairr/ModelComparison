@@ -12,13 +12,14 @@ function App() {
   const [LSTMCheck, setLSTMCheck] = useState(null);
   const [GRUCheck, setGRUCheck] = useState(null);
   const [RNNCheck, setRNNCheck] = useState(null);
+  const [BiLSTMCheck, setBiLSTMCheck] = useState(null);
+  const [BiGRUCheck, setBiGRUCheck] = useState(null);
+  const [BiRNNCheck, setBiRNNCheck] = useState(null);
   const [epochCheck, setEpochCheck] = useState(null);
-  const [epochs, setEpochs] = useState(["", "", ""]);
+  const [epochs, setEpochs] = useState(["", "", "", "", "", ""]);
   const [val, setVal] = useState("Upload an image to get started.");
-  const [RNNdata, setRNNdata] = useState([]);
-  const [GRUdata, setGRUdata] = useState([]);
-  const [LSTMdata, setLSTMdata] = useState([]);
-  const [data, setData] = useState("Disconnected");
+  const [data, setData] = useState({});
+  const [status, setStatus] = useState("Disconnected");
 
   const handleImageUpload = (event) => {
     setDisplayImage(URL.createObjectURL(event.target.files[0]));
@@ -50,6 +51,7 @@ function App() {
         event.target.value,
         prevEpoches[1],
         prevEpoches[2],
+        ...prevEpoches.slice(3, 6),
       ]);
     }
     if (event.target.id === "GRUepochs") {
@@ -57,6 +59,7 @@ function App() {
         prevEpoches[0],
         event.target.value,
         prevEpoches[2],
+        ...prevEpoches.slice(3, 6),
       ]);
     }
     if (event.target.id === "RNNepochs") {
@@ -64,6 +67,30 @@ function App() {
         prevEpoches[0],
         prevEpoches[1],
         event.target.value,
+        ...prevEpoches.slice(3, 6),
+      ]);
+    }
+    if (event.target.id === "BiLSTMepochs") {
+      setEpochs((prevEpoches) => [
+        
+          ...prevEpoches.slice(0, 3),
+          event.target.value,
+          ...prevEpoches.slice(4, 6),
+        ,
+      ]);
+    }
+    if (event.target.id === "BiGRUepochs") {
+      setEpochs((prevEpoches) => [
+        
+          ...prevEpoches.slice(0, 4),
+          event.target.value,
+          ...prevEpoches.slice(5, 6),
+        ,
+      ]);
+    }
+    if (event.target.id === "BiRNNepochs") {
+      setEpochs((prevEpoches) => [
+        ...prevEpoches.slice(0, 5), event.target.value,
       ]);
     }
   };
@@ -73,12 +100,18 @@ function App() {
       if (event.target.value === "LSTM") setLSTMCheck(true);
       else if (event.target.value === "GRU") setGRUCheck(true);
       else if (event.target.value === "RNN") setRNNCheck(true);
+      else if (event.target.value === "BiLSTM") setBiLSTMCheck(true);
+      else if (event.target.value === "BiGRU") setBiGRUCheck(true);
+      else if (event.target.value === "BiRNN") setBiRNNCheck(true);
       setNumModels((prevNumModels) => prevNumModels + 1);
       setModel((prevModel) => [...prevModel, event.target.value]);
     } else {
       if (event.target.value === "LSTM") setLSTMCheck(null);
       else if (event.target.value === "GRU") setGRUCheck(null);
       else if (event.target.value === "RNN") setRNNCheck(null);
+      else if (event.target.value === "BiLSTM") setBiLSTMCheck(null);
+      else if (event.target.value === "BiGRU") setBiGRUCheck(null);
+      else if (event.target.value === "BiRNN") setBiRNNCheck(null);
       setNumModels((prevNumModels) => prevNumModels - 1);
       setModel((prevModel) =>
         prevModel.filter((model) => model !== event.target.value)
@@ -91,17 +124,17 @@ function App() {
       .then((res) => res.json())
       .then((data) => {
         console.log(data.status);
-        setData(data.status);
+        setStatus(data.status);
       })
       .catch((error) => console.error("Error:", error));
   }, []);
 
   useEffect(() => {
-    if (data === "Connected") {
+    if (status === "Connected") {
       document.getElementById("pulse").classList.add("green-pulse");
       document.getElementById("pulse").classList.remove("red-pulse");
     }
-  }, [data]);
+  }, [status]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -116,7 +149,7 @@ function App() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ models, epochs })
+        body: JSON.stringify({ models, epochs }),
       });
       const data = await res.json();
       console.log(data.message);
@@ -130,12 +163,19 @@ function App() {
       });
       const newData = await res.json();
       console.log(newData);
-      setLSTMdata([newData.LSTMcaption, newData.LSTMet]);
-      setGRUdata([newData.GRUcaption, newData.GRUet]);
-      setRNNdata([newData.RNNcaption, newData.RNNet]);
+      setData(newData);
       setTimeout(() => {
         setLtext("Choose another image");
         setDisplayCheck(null);
+        setEpochCheck(null);
+        setModelCheck(null);
+        setLSTMCheck(null);
+        setGRUCheck(null);
+        setRNNCheck(null);
+        setBiLSTMCheck(null);
+        setBiGRUCheck(null);
+        setBiRNNCheck(null);
+        setEpochs(["", "", "", "", "", ""]);
         setNumModels(0);
       }, 5000);
     } catch (error) {
@@ -148,13 +188,13 @@ function App() {
     <>
       <div className="w-[100%] h-[10px] bg-[#F0B542]"></div>
       <div className="w-[100%] text-center mt-3 text-[25px] font-sofia font-bold flex flex-row justify-center items-center gap-5">
-        {data}
+        {status}
         <span id="pulse" className="text-[40px] red-pulse">
           •
         </span>
       </div>
       <div className="flex flex-col items-center justify-center min-h-screen max-h-full font-sofia text-white font-bold text-[25px]">
-        <div className="text-[20px]">Division of AI Research Presents:</div>
+        <div className="text-[35px]">Division of AI Research Presents:</div>
         <div className="font-bold text-[35px] w-[40%] text-center mb-5">
           Comparative Analysis of{" "}
           <span className="text-[#F0B542]">Transformers</span> and{" "}
@@ -228,6 +268,39 @@ function App() {
                   <label htmlFor="model1">RNN</label>
                   <br />
                 </div>
+                <div>
+                  <input
+                    type="checkbox"
+                    id="model5"
+                    name="model5"
+                    value="BiLSTM"
+                    onChange={handleModel}
+                  />
+                  <label htmlFor="model1">BiLSTM</label>
+                  <br />
+                </div>
+                <div>
+                  <input
+                    type="checkbox"
+                    id="model4"
+                    name="model4"
+                    value="BiGRU"
+                    onChange={handleModel}
+                  />
+                  <label htmlFor="model1">BiGRU</label>
+                  <br />
+                </div>
+                <div>
+                  <input
+                    type="checkbox"
+                    id="model6"
+                    name="model6"
+                    value="BiRNN"
+                    onChange={handleModel}
+                  />
+                  <label htmlFor="model1">BiRNN</label>
+                  <br />
+                </div>
               </div>
             </>
           )}
@@ -288,6 +361,63 @@ function App() {
               </select>
             </div>
           )}
+          {modelCheck && BiLSTMCheck && (
+            <div className="text-[25px] mb-5">
+              Choose the number of epochs for BiLSTM: &nbsp;
+              <select
+                id="BiLSTMepochs"
+                name="BiLSTMepochs"
+                onChange={(e) => handleEpochChange(e)}
+              >
+                <option value="">...</option>
+                <option value="3">3</option>
+                <option value="6">6</option>
+                <option value="9">9</option>
+                <option value="12">12</option>
+                <option value="15">15</option>
+                <option value="18">18</option>
+                <option value="21">21</option>
+              </select>
+            </div>
+          )}
+          {modelCheck && BiGRUCheck && (
+            <div className="text-[25px] mb-5">
+              Choose the number of epochs for BiGRU: &nbsp;
+              <select
+                id="BiGRUepochs"
+                name="BiGRUepochs"
+                onChange={(e) => handleEpochChange(e)}
+              >
+                <option value="">...</option>
+                <option value="3">3</option>
+                <option value="6">6</option>
+                <option value="9">9</option>
+                <option value="12">12</option>
+                <option value="15">15</option>
+                <option value="18">18</option>
+                <option value="21">21</option>
+              </select>
+            </div>
+          )}
+          {modelCheck && BiRNNCheck && (
+            <div className="text-[25px] mb-5">
+              Choose the number of epochs for BiRNN: &nbsp;
+              <select
+                id="BiRNNepochs"
+                name="BiRNNepochs"
+                onChange={(e) => handleEpochChange(e)}
+              >
+                <option value="">...</option>
+                <option value="3">3</option>
+                <option value="6">6</option>
+                <option value="9">9</option>
+                <option value="12">12</option>
+                <option value="15">15</option>
+                <option value="18">18</option>
+                <option value="21">21</option>
+              </select>
+            </div>
+          )}
           {modelCheck && epochCheck && (
             <button
               type="submit"
@@ -299,25 +429,58 @@ function App() {
           )}
         </form>
         <div className="mt-5 mb-10 text-[25px]">{val}</div>
-        {LSTMdata.length > 0 && (
+        {data.LSTMcaption && (
           <div className="flex flex-col items-center">
-            <div className="text-[25px] mb-5 text-[#F0B542]">LSTM:</div>
-            <div className="text-[20px] mb-5">{LSTMdata[0]}</div>
-            <div className="text-[20px] mb-5">Execution Time: {LSTMdata[1]}s</div>
+            <div className="text-[25px] mb-5 text-[#F0B542]">LSTM</div>
+            <div className="text-[20px] mb-5">{data.LSTMcaption}</div>
+            <div className="text-[20px] mb-5">
+              Execution Time: {data.LSTMet}s
+            </div>
           </div>
         )}
-        {GRUdata.length > 0 && (
+        {data.GRUcaption && (
           <div className="flex flex-col items-center">
-            <div className="text-[25px] mb-5 text-[#d11055]">GRU:</div>
-            <div className="text-[20px] mb-5">{GRUdata[0]}</div>
-            <div className="text-[20px] mb-5">Execution Time: {GRUdata[1]}s</div>
+            <div className="text-[25px] mb-5 text-[#F0B542]">GRU</div>
+            <div className="text-[20px] mb-5">{data.GRUcaption}</div>
+            <div className="text-[20px] mb-5">
+              Execution Time: {data.GRUet}s
+            </div>
           </div>
         )}
-        {RNNdata.length > 0 && (
+        {data.RNNcaption && (
           <div className="flex flex-col items-center">
-            <div className="text-[25px] mb-5 text-[#1c9fff]">RNN:</div>
-            <div className="text-[20px] mb-5">{RNNdata[0]}</div>
-            <div className="text-[20px] mb-5">Execution Time: {RNNdata[1]}s</div>
+            <div className="text-[25px] mb-5 text-[#F0B542]">RNN</div>
+            <div className="text-[20px] mb-5">{data.RNNcaption}</div>
+            <div className="text-[20px] mb-5">
+              Execution Time: {data.RNNet}s
+            </div>
+          </div>
+        )}
+        {data.BiLSTMcaption && (
+          <div className="flex flex-col items-center">
+            <div className="text-[25px] mb-5 text-[#F0B542]">BiLSTM</div>
+            <div className="text-[20px] mb-5">{data.BiLSTMcaption}</div>
+            <div className="text-[20px] mb-5">
+              Execution Time: {data.BiLSTMet}s
+            </div>
+          </div>
+        )}
+        {data.BiGRUcaption && (
+          <div className="flex flex-col items-center">
+            <div className="text-[25px] mb-5 text-[#F0B542]">BiGRU</div>
+            <div className="text-[20px] mb-5">{data.BiGRUcaption}</div>
+            <div className="text-[20px] mb-5">
+              Execution Time: {data.BiGRUet}s
+            </div>
+          </div>
+        )}
+        {data.BiRNNcaption && (
+          <div className="flex flex-col items-center">
+            <div className="text-[25px] mb-5 text-[#F0B542]">BiRNN</div>
+            <div className="text-[20px] mb-5">{data.BiRNNcaption}</div>
+            <div className="text-[20px] mb-5">
+              Execution Time: {data.BiRNNet}s
+            </div>
           </div>
         )}
       </div>

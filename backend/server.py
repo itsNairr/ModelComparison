@@ -65,11 +65,12 @@ def upload():
 
     if file and allowed_file(file.filename):
         # Write the filename to a text file
+        global caption
+        caption = {}
         img_path = 'uploads/' + file.filename
         file.save(img_path)
         processed = process_image(img_path, vgg_model)
         print("Initialization complete")
-        global caption
         for model in models:
             if model == 'LSTM':
                 LSTMcaption, LSTMet = Caption(processed, 'LSTM', 0)
@@ -82,6 +83,18 @@ def upload():
             if model == 'RNN':
                 RNNcaption, RNNet = Caption(processed, 'RNN', 2)
                 response = {"RNNcaption": RNNcaption, "RNNet": RNNet}
+                caption.update(response)
+            if model == 'BiLSTM':
+                BiLSTMcaption, BiLSTMet = Caption(processed, 'BILSTM', 3)
+                response = {"BiLSTMcaption": BiLSTMcaption, "BiLSTMet": BiLSTMet}
+                caption.update(response)
+            if model == 'BiGRU':
+                BiGRUcaption, BiGRUet = Caption(processed, 'BIGRU', 4)
+                response = {"BiGRUcaption": BiGRUcaption, "BiGRUet": BiGRUet}
+                caption.update(response)
+            if model == 'BiRNN':
+                BiRNNcaption, BiRNNet = Caption(processed, 'BIRNN', 5)
+                response = {"BiRNNcaption": BiRNNcaption, "BiRNNet": BiRNNet}
                 caption.update(response)
 
         # Remove the image after captioning
